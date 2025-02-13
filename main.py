@@ -15,8 +15,9 @@ calcTabla = []
 n = 0;
 t = 0;
 # -------------*------------------------*-----------------
-def main(n2o, humidity, temperature, pression, n, t):
-    print('oxido nitroso:')
+def main():
+    #(n2o, humidity, temperature, pression, n, t)
+    """print('oxido nitroso:')
     print(n2o)
     print('\n humedad:')
     print(humidity)
@@ -25,7 +26,7 @@ def main(n2o, humidity, temperature, pression, n, t):
     print('\n presion:')
     print(pression)
     print('\n n=' +str(+n))
-    print('\n (cant de columnas / vars) t=' +str(+t))
+    print('\n (cant de columnas / vars) t=' +str(+t))"""
 
 # to read the db on the csv field
 # -------------*------------------------*-----------------
@@ -43,10 +44,10 @@ if __name__ == '__main__':
                 temperature.append(float(data[2]))
                 pression.append(float(data[3]))
                 #
-                t =(len(data))
+                #t =(len(data))
             #
             n= len(n2o);
             i += 1;
-    main(n2o, humidity, temperature, pression, n, t);
+    main();
 # -------------*------------------------*-----------------
 # list(map(smt, smt2))

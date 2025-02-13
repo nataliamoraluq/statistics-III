@@ -16,7 +16,7 @@ for col in df.columns:
 
 # Aplica estilos visuales al DataFrame
 styled_df = df.style.format(precision=2, decimal='.') \
-                   .set_properties(**{'border': '1px solid black', 'text-align': 'center'}) \
+                   .set_properties(**{'border': '1px solid blue', 'text-align': 'center'}) \
                    
 
 # Muestra el DataFrame resultante
