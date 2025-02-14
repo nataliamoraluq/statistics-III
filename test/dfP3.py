@@ -77,7 +77,7 @@ suma_total_sumatorias = df_resultados["sumatoria"].sum()
 suma_total_cuadrados = df_resultados["sumatoria_cuadrado"].sum()
 
 # Calcula la suma total elevada al cuadrado con 4 decimales
-sumt_elevadaAl2 = float(f"{suma_total_sumatorias**2:.4f}")
+#sumt_elevadaAl2 = float(f"{suma_total_sumatorias**2:.4f}")  ---> REVISAR!!!
 
 # Calcula la nueva sumatoria: sumatoriaPorValAlCuadrado
 sumatoriaPorValAlCuadrado = sum(df_resultados["sumatoria"]**2)
@@ -89,6 +89,6 @@ print(f"\nSuma de los totales por columnas: {suma_total_sumatorias:.4f}")
 
 print(f"\nSuma de los totales al cuadrado sumX2 al cuadrado: {suma_total_cuadrados:.4f}")
 
-print(f"\nSumT elevada al cuadrado: {sumt_elevadaAl2}")
+#print(f"\nSumT elevada al cuadrado: {sumt_elevadaAl2}") ---> REVISAR!!!
 
 print(f"\nSumatoria de los cuadrados de las sumatorias: {sumatoriaPorValAlCuadrado:.4f}")
