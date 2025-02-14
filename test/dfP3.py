@@ -18,9 +18,26 @@ for nombre_columna in nombres_columnas:
     # Calcula el cuadrado de los valores
     arreglo_cuadrado = arreglo_original**2
 
+    #sumt ------------------------------------------------------------
+    """
+    numero = np.float64(12.3456789)
+
+    print(f"{numero:.4f}")  # Output: 12.3457
+    
+    """
+    sumT = np.sum(arreglo_original)
+    sumTal2 = np.sum(arreglo_cuadrado)
+    print("len original array:"+str(len(arreglo_original)))
+    print("Sum t POR COLUMNA : "+str(f"{sumT:.4f}"))
+    print("Sum tcuadrado POR COLUMNA: "+str(f"{sumTal2:.4f}"))
+    print("----------------------------------------")
+    print("\n")
+
+    sumT = 0
+    sumTal2 = 0
+
     # Calcula la sumatoria de los valores
     sumatoria = np.sum(arreglo_original)
-
     # Calcula la sumatoria de los valores al cuadrado
     sumatoria_cuadrado = np.sum(arreglo_cuadrado)
 
@@ -60,7 +77,7 @@ suma_total_sumatorias = df_resultados["sumatoria"].sum()
 suma_total_cuadrados = df_resultados["sumatoria_cuadrado"].sum()
 
 # Calcula la suma total elevada al cuadrado con 4 decimales
-suma_total_cuadrados_elevada = float(f"{suma_total_sumatorias**2:.4f}")
+sumt_elevadaAl2 = float(f"{suma_total_sumatorias**2:.4f}")
 
 # Calcula la nueva sumatoria: sumatoriaPorValAlCuadrado
 sumatoriaPorValAlCuadrado = sum(df_resultados["sumatoria"]**2)
@@ -68,10 +85,10 @@ sumatoriaPorValAlCuadrado = sum(df_resultados["sumatoria"]**2)
 # Muestra el DataFrame con los resultados
 print(df_resultados)
 
-print(f"\nSuma total de todas las sumatorias: {suma_total_sumatorias:.4f}")
+print(f"\nSuma de los totales por columnas: {suma_total_sumatorias:.4f}")
 
-print(f"\nSuma de todos los valores al cuadrado: {suma_total_cuadrados:.4f}")
+print(f"\nSuma de los totales al cuadrado sumX2 al cuadrado: {suma_total_cuadrados:.4f}")
 
-print(f"\nSuma total elevada al cuadrado: {suma_total_cuadrados_elevada}")
+print(f"\nSumT elevada al cuadrado: {sumt_elevadaAl2}")
 
 print(f"\nSumatoria de los cuadrados de las sumatorias: {sumatoriaPorValAlCuadrado:.4f}")
