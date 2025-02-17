@@ -1,6 +1,7 @@
 import math #IMPORTS HERE
 import matplotlib.pyplot as plt
-import scipy.stats as stats
+from scipy.stats import f, studentized_range #para ftab -> f, ystudent -> tukey 
+#import tabulate as tab
 import seaborn as sns
 import numpy as np
 import pandas as pd
