@@ -20,7 +20,7 @@ nt = 0
 for i in nombres_columnas:
     ni = len(df[i].values)
 #
-#
+# MAIN FOR ---------- TABLA DE CONTINGENCIA / COLUMNAS / POR VARIABLE
 for columnVar in nombres_columnas:
     # Se itera sobre las columnas del DataFrame
     origData = df[columnVar].values # Guarda los valores originales de la columna en un arreglo
@@ -62,6 +62,7 @@ calcsPerColumn = {
     "media": []
 }
 #--------------------------------------------------------------------------
+# ________________ DATAFRAME CON LOS TOTALES POR VAR_______________________
 # Se itera sobre las columnas y sus resultados
 for nombreCol, datos in contingencyTable.items():
     # Agrega los resultados a las listas correspondientes
@@ -74,11 +75,11 @@ for nombreCol, datos in contingencyTable.items():
     calcsPerColumn["xi^2/n"].append(float(f"{datos['sum_xi_^2_/n']:.4f}"))
     calcsPerColumn["media"].append(float(f"{datos['media']:.4f}"))
 #
-#contingencyTable results after processing -- dfResults
-dfResults = pd.DataFrame(calcsPerColumn) #DataFrame a partir del diccionario
-#
-print(dfResults) # imprimir DataFrame con results
+# **** contingencyTable results after processing -- dfResults ***********
+dfResults = pd.DataFrame(calcsPerColumn) #DataFrame a partir del diccionario con totales por var
+print(dfResults) #imprimir DataFrame con results
 #-----------------------------------------------------------
+# _________________ PASOS / TOTALES DE LA TABLA DE CONTINGENC. ________________
 def printSumData(df_resultados):
     #df_resultados -> dfResults per parameters
     sumXt = df_resultados["xi"].sum() # Σsum de Xt total
@@ -95,11 +96,15 @@ def printSumData(df_resultados):
     print(f"\n Ni (por col.) = {ni}")
     print(f"\n Nt = {nt}")
     print(f"\n t = {tCols}")
-    #print(f"\n Σ(Xt) ^ 2 / Nt = {betN}") -- #revisar
+#
+printSumData(dfResults)    
+#_________________________________________________________________________________________________
+#-------------------------------------------------------------------------------------------------
+# --------------------------------- CALCS TABLA ANALISIS DE VARIANZA -----------------------------
+#_________________________________________________________________________________________________
     
 
-#
-printSumData(dfResults)
+
 #
 #
 #
