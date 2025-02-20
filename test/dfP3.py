@@ -34,10 +34,10 @@ for columnVar in nombres_columnas:
     sumTsquare = np.sum(origDataSec) # sumatoria de los valores --- POR COLUMNA
     medianVar = np.median(origData) # valores de la media POR COLUMNA
     sumOt = np.sum(sumT**2) #sumT elevado a la 2
-    print(f"\n sumOt = {sumOt:.4f}")
+    #print(f"\n sumOt = {sumOt:.4f}")
     #
     forBet = sumOt / ni
-    print(f"\n forBet = {forBet:.4f}")
+    #print(f"\n forBet = {forBet:.4f}")
     sumBetN = forBet
     #
     # save results en el diccionario
@@ -77,7 +77,7 @@ for nombreCol, datos in contingencyTable.items():
 #
 # **** contingencyTable results after processing -- dfResults ***********
 dfResults = pd.DataFrame(calcsPerColumn) #DataFrame a partir del diccionario con totales por var
-print(dfResults) #imprimir DataFrame con results
+print("Contingency table:\n",dfResults) #imprimir DataFrame con results
 #-----------------------------------------------------------
 # _________________ PASOS / TOTALES DE LA TABLA DE CONTINGENC. ________________
 def printSumData(df_resultados):
