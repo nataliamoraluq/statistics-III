@@ -8,10 +8,13 @@ from tabulate import *
 # -- VARS, ARRAYS N GLOBAL STUFF --
 origData = []
 origDataSec = []
+"""
 fTab = 0 #fTab
 fCalc = 0 #fCalc
 dhs = 0
 pTukey = 0
+"""
+
 
 """
 # calcsPerColumn - diccionario results. por columna // other data in case i need it or want to see it!!
@@ -31,19 +34,9 @@ calcsPerColumn = {
     "media": []
 }
 #diccionario: pre - table values / need to know em before doing the 2nd table (tabla de analisis de var.)
-preTabVales = {
-    "gl(Trat)":tCols-1,
-    "gl(Err)":nt-tCols,
-    "sigLevel":0.95,
-    "alpha":0.05,
-    "fTab":fTab
-}
+preTabVales = {}
 #diccionario: medidas/valores de la tabla de analisis de var.
-tabVarValues = {
-    "TreatmentMeasures":[], #medidas de tratamiento [SCTR,glT,MCTR]
-    "ErrorMeasures":[], #medidas de error [SCE,glE,MCE]
-    "TotalMeasures":[], #medidas totales [SCT,n-1,RV(fCalc)]
-}
+tabVarValues = {}
 #
 
 
@@ -66,6 +59,8 @@ def makeContingencyTable():
     for columnVar in nombres_columnas:
         # Se itera sobre las columnas del DataFrame
         origData = df[columnVar].values # Guarda los valores originales de la columna en un arreglo
+        global tCols
+        tCols = len(df.columns)
         nt += len(df[columnVar].values)
         origDataSec = origData**2 # Calcula el cuadrado de los valores
         #origData -> arreglo original/ datos originales de entrada separados en arreglos por columna
@@ -109,7 +104,120 @@ def makeContingencyTable():
     #--------------------------------------------------------------------------
 #
 
+def hipotesisProof(ftab, fcalc):
+    print("\n ") 
+    print("----------------------------- PRUEBA DE HIPOTESIS ---------------------------------") 
+    if(fcalc < ftab):
+        print("----------------------------------------------------------------------------------") 
+        print("(RR) - Se rechaza la Hipotesis Nula (Ho), aceptando la Hipotesis Alternativa (Ha)")
+    elif(fcalc > ftab):
+        print("----------------------------------------------------------------------------------") 
+        print("(RA) - Se afirma que la Hipotesis Nula (Ho) es verdadero, rechazando asi la Hipotesis Alternativa (Ha)")
+    else:
+        print("Error! Revisar valores de Ftab y Fcalc")
+    print("----------------------------------------------------------------------------------\n ") 
+
+
+#_________________________________________________________________________________________________
+#-------------------------------------------------------------------------------------------------
+# --------------------------------- CALCS TABLA ANALISIS DE VARIANZA -----------------------------
+#_________________________________________________________________________________________________
+def varianceAnalysisCalcs(dfResults, tCols, nt):
+    #print(f" x")
+    #
+    print("_____________________________________________________________________\n ") 
+    print("___________ The other stuff pre - table (round with 4 dec)___________") 
+    #-------------------
+    sumXt = dfResults["xi"].sum()**2 #Σ(Xt)
+    sumX2 = dfResults["xi2"].sum() #ΣX2t
+    sumBetN = dfResults["xi^2/n"].sum() #Σ(Xt)2 / n
+    print("Σ(Xt) ^ 2: ",round(sumXt,4)) 
+    #C = Σ(Xt) ^ 2 / Nt
+    C = sumXt / nt
+    print("calc C= ",round(C, 4))
+    #SCT = ΣX2t - C
+    SCT = sumX2 - C
+    print("SCT = ",round(SCT, 4))
+    #SCTR = ( Σ(Xt) ^ 2 / n ) - C
+    SCTR = sumBetN - C
+    print("SCTR = ",round(SCTR,4))
+    #SCE = SCT - SCTR
+    SCE = SCT - SCTR
+    print("SCE = ",round(SCE,4))
+    #
+    #gl  - GRADOS DE LIBERTAD - GL DE TRATAMIENTO Y GR DE ERROR
+    glTrat = tCols - 1
+    glErr=nt-tCols
+
+    print("glTrat = ",glTrat)
+    print("glError = ",glErr)
+    #MCTR = SCE //glTrat
+    MCTR = SCTR /glTrat
+    print("MCTR = ",round(MCTR,4))
+    #MCE
+    MCE = SCE /glErr
+    print("MCE = ",round(MCE,4))
+    #F - RV - RAZON DE VARIANZA
+    Fcalc = MCTR / MCE
+    print("RV / F calc = ",round(Fcalc,4))
+
+    # **************************************************
+
+    #F TAB - F TABULADO
+    #Ftab = F glTrat;glErr;1-alpha
+    #alpha = 0.05 ; 1-alpha (sigL) = 0.95
+    #OJO AQUI! Comparar results y ver!!!!!!
+    Ftab = f.ppf(1-0.05, dfn=glTrat,dfd=glErr)
+    print("Ftab = ", round(Ftab,4))
+
+    
+    #save the data on the dict
+    preTabVales = {
+        "gl(Trat)":glTrat,
+        "gl(Err)":glErr,
+        "sigLevel":0.95,
+        "alpha":0.05,
+        "fTab":Ftab
+    }
+
+    tabVarValues = {
+        "Fuente_de_Variacion":["Tratamientos","Error","Total"],
+        "_____":["------","------","------"],
+        "SC":["SCTR:"+str(round(SCTR,4)), "gl(Tratamiento): "+str(round(glTrat,4)), "MCTR:"+str(round(MCTR,4))], #medidas de tratamiento [SCTR,glT,MCTR]
+        "_____/":["------","------","------"],
+        "gl":["SCE: "+str(round(SCE,4)), "gl(Error): "+str(glErr), "MCE:"+str(round(MCE,4))], #medidas de error [SCE,glE,MCE]
+        "____//":["------","------","------"],
+        "MC":["SCT: "+str(round(SCT,4)), "nt-1: "+str(nt-1), "(RV) - Fcalc: "+str(round(Fcalc,4))], #medidas totales [SCT,n-1,RV(fCalc)]
+    }
+
+    """
+    tabVarValues = {
+        "Fuente_de_Variacion":["Tratamientos","Error","Total"],
+        "SC":[("SCTR: ",round(SCTR,4)), ("gl(Tratamiento): ",round(glTrat,4)), ("MCTR:",round(MCTR,4))], #medidas de tratamiento [SCTR,glT,MCTR]
+        "gl":[("SCE: ",round(SCE,4)), ("gl(Error): ",glErr), ("MCE:",MCE)], #medidas de error [SCE,glE,MCE]
+        "MC":[("SCT: ",round(SCT,4)), ("nt-1: ",nt-1), ("(RV) - Fcalc: ",round(Fcalc,4))], #medidas totales [SCT,n-1,RV(fCalc)]
+    }
+    """
+
+    #dataframe con los calcs para la tabla
+    print("----------------------------------------------------------------------------------\n ") 
+    dfTabRV = pd.DataFrame(tabVarValues)
+    print(dfTabRV)
+
+    # -- PRUEBA DE HIPOTESIS --
+    hipotesisProof(Ftab, Fcalc)
+
+    #calcsPerColumn["fTab"].append(float(f"{valueCalcHere:.4f}"))
+# ------------------------ PRUEBA DE TUKEY -------------------
+def tukeyTrial(ni,MCE,nminust,alpha):
+    #ni = nj = 30 (muestra por col)
+    global nj
+    nj = ni
+    #Valor qalpha t studentizada?
+    #print(f" x")
 #
+
+#-------------------------------------- IMPRESION TABLA DE CONTINGENCIA ---------------------------------------
 def printSumData():
     makeContingencyTable() #se llama al metodo main/principal/ conting. table
     #para que se ejecute, se procesen y llenen los datos, luego procedemos a la impresion
@@ -138,8 +246,8 @@ def printSumData():
     sumXt = dfResults["xi"].sum() # Σsum de Xt total
     sumX2 = dfResults["xi2"].sum() # Σsum de X a la 2 t total
     #sumTotXtElev2 = df_resultados["xi^2"].sum() # Σsum total de Xt elevada al cuadrado total
-    global tCols
-    tCols = len(df.columns)
+    """global tCols
+    tCols = len(df.columns)"""
     betN = dfResults["xi^2/n"].sum() #sum de todos los xi^2/ni POR COLUMNA ; el xielev2 / ni de c/u sumados
     #OJO! != de C porque C es el xielev2 / nT
     #results con 4 decimales al imprimirlos
@@ -152,30 +260,14 @@ def printSumData():
     print(f" \nNi (por col.) = {ni}")
     print(f" Nt = {nt}")
     print(f" t = {tCols}")
+
+    #send the new df with the data to the next calkcs to do
+    varianceAnalysisCalcs(dfResults, tCols, nt)
+    #why so from the df? cause there's the whole data and not just BY COLUMN / PER COLUMN
+    
 #
 printSumData()    
-#_________________________________________________________________________________________________
-#-------------------------------------------------------------------------------------------------
-# --------------------------------- CALCS TABLA ANALISIS DE VARIANZA -----------------------------
-#_________________________________________________________________________________________________
-def varianceAnalysisCalcs():
-    print(f" x")
-    #C
-    #SCT
-    #SCTR
-    #SCE
-    #
-    #
-    #MCTR
-    #MCE
-    #F - RV - RAZON DE VARIANZA
-def tukeyTrial(ni,MCE,nminust,alpha):
-    #ni = nj = 30 (muestra por col)
-    global nj
-    nj = ni
-    #Valor qalpha t studentizada?
-    print(f" x")
-#
+
 #
 #
 #
