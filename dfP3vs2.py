@@ -1,13 +1,14 @@
 #
 import pandas as pd
 import numpy as np
-import math
+from math import sqrt
 from scipy.stats import f, studentized_range
 from tabulate import *
 # ---------------------------------------------------------------------------------------------
 # -- VARS, ARRAYS N GLOBAL STUFF --
 origData = []
 origDataSec = []
+mediasVars = []
 """
 fTab = 0 #fTab
 fCalc = 0 #fCalc
@@ -101,22 +102,31 @@ def makeContingencyTable():
         #calcsPerColumn["xi^2"].append(float(f"{datos['sumatoria_xi_al_cuadrado']:.4f}"))
         calcsPerColumn["xi^2/n"].append(float(f"{datos['sum_xi_^2_/n']:.4f}"))
         calcsPerColumn["media"].append(float(f"{datos['media']:.4f}"))
+
+        #array de medias
+        mediasVars.append(float(f"{datos['media']:.4f}"))
+    for i in mediasVars:
+        print("media:",i)
+        #("")+str()
     #--------------------------------------------------------------------------
 #
 
 def hipotesisProof(ftab, fcalc):
-    print("\n ") 
+    #print("\n ") 
     print("----------------------------- PRUEBA DE HIPOTESIS ---------------------------------") 
     if(fcalc < ftab):
-        print("----------------------------------------------------------------------------------") 
+        #print("----------------------------------------------------------------------------------") 
+        print(" Fcalc < Ftab")
+        print(str(fcalc)," < ",str(ftab))
         print("(RR) - Se rechaza la Hipotesis Nula (Ho), aceptando la Hipotesis Alternativa (Ha)")
     elif(fcalc > ftab):
-        print("----------------------------------------------------------------------------------") 
-        print("(RA) - Se afirma que la Hipotesis Nula (Ho) es verdadero, rechazando asi la Hipotesis Alternativa (Ha)")
+        #print("----------------------------------------------------------------------------------") 
+        print(" Fcalc > Ftab")
+        print(str(round(fcalc,4))," > ",str(round(ftab,4)))
+        print("(RA) - Se acepta la Hipotesis Nula (Ho), rechazando asi la Hipotesis Alternativa (Ha)")
     else:
         print("Error! Revisar valores de Ftab y Fcalc")
-    print("----------------------------------------------------------------------------------\n ") 
-
+    print("------------------------------------------------------------------------------------------\n ") 
 
 #_________________________________________________________________________________________________
 #-------------------------------------------------------------------------------------------------
@@ -125,41 +135,47 @@ def hipotesisProof(ftab, fcalc):
 def varianceAnalysisCalcs(dfResults, tCols, nt):
     #print(f" x")
     #
-    print("_____________________________________________________________________\n ") 
-    print("___________ The other stuff pre - table (round with 4 dec)___________") 
+    """print("_____________________________________________________________________\n ") 
+    print("___________ The other stuff pre - table (round with 4 dec)___________") """
+    #-------------------
+    
+    #mediasVars = []
+    """for posi in contingencyTable.items:
+        mediasVars[posi].append(dfResults["media"])
+        print("media nro:",str(posi)," =",str(mediasVars[posi].value))"""
     #-------------------
     sumXt = dfResults["xi"].sum()**2 #Σ(Xt)
     sumX2 = dfResults["xi2"].sum() #ΣX2t
     sumBetN = dfResults["xi^2/n"].sum() #Σ(Xt)2 / n
-    print("Σ(Xt) ^ 2: ",round(sumXt,4)) 
+    #print("Σ(Xt) ^ 2: ",round(sumXt,4)) 
     #C = Σ(Xt) ^ 2 / Nt
     C = sumXt / nt
-    print("calc C= ",round(C, 4))
+    #print("calc C= ",round(C, 4))
     #SCT = ΣX2t - C
     SCT = sumX2 - C
-    print("SCT = ",round(SCT, 4))
+    #print("SCT = ",round(SCT, 4))
     #SCTR = ( Σ(Xt) ^ 2 / n ) - C
     SCTR = sumBetN - C
-    print("SCTR = ",round(SCTR,4))
+    #print("SCTR = ",round(SCTR,4))
     #SCE = SCT - SCTR
     SCE = SCT - SCTR
-    print("SCE = ",round(SCE,4))
+    #print("SCE = ",round(SCE,4))
     #
     #gl  - GRADOS DE LIBERTAD - GL DE TRATAMIENTO Y GR DE ERROR
     glTrat = tCols - 1
     glErr=nt-tCols
 
-    print("glTrat = ",glTrat)
-    print("glError = ",glErr)
+    """print("glTrat = ",glTrat)
+    print("glError = ",glErr)"""
     #MCTR = SCE //glTrat
     MCTR = SCTR /glTrat
-    print("MCTR = ",round(MCTR,4))
+    #print("MCTR = ",round(MCTR,4))
     #MCE
     MCE = SCE /glErr
-    print("MCE = ",round(MCE,4))
+    #print("MCE = ",round(MCE,4))
     #F - RV - RAZON DE VARIANZA
     Fcalc = MCTR / MCE
-    print("RV / F calc = ",round(Fcalc,4))
+    #print("RV / F calc = ",round(Fcalc,4))
 
     # **************************************************
 
@@ -168,54 +184,118 @@ def varianceAnalysisCalcs(dfResults, tCols, nt):
     #alpha = 0.05 ; 1-alpha (sigL) = 0.95
     #OJO AQUI! Comparar results y ver!!!!!!
     Ftab = f.ppf(1-0.05, dfn=glTrat,dfd=glErr)
-    print("Ftab = ", round(Ftab,4))
-
-    
-    #save the data on the dict
-    preTabVales = {
+    #print("Ftab = ", round(Ftab,4))
+    #save the data on the dict - datos pre tabla
+    preTabValues = {
         "gl(Trat)":glTrat,
         "gl(Err)":glErr,
         "sigLevel":0.95,
         "alpha":0.05,
-        "fTab":Ftab
+        "fTab":Ftab,
+        "fCalc": Fcalc,
     }
 
+    alfa = preTabValues["alpha"]
+    print("alpha=",alfa)
+
+    #vers .1 del diccionario ; ordenando por tipo de medidas
+    """tabVarValues = {
+        "Fuente_de_Variacion":["Tratamientos","Error","Total"], #cabeceras
+        "TreatmentMeasures":["SCTR:"+str(round(SCTR,4)), "gl(Tratamiento): "+str(round(glTrat,4)), "MCTR:"+str(round(MCTR,4))], #medidas de tratamiento [SCTR,glT,MCTR]
+        "ErrorMeasures":["SCE: "+str(round(SCE,4)), "gl(Error): "+str(glErr), "MCE:"+str(round(MCE,4))], #medidas de error [SCE,glE,MCE]
+        "TotalMeasures":["SCT: "+str(round(SCT,4)), "nt-1: "+str(nt-1), "(RV) - Fcalc: "+str(round(Fcalc,4))], #medidas totales [SCT,n-1,RV(fCalc)]
+    }"""
+
+    #vers.2 - guardados con el orden de la tabla original
     tabVarValues = {
         "Fuente_de_Variacion":["Tratamientos","Error","Total"],
-        "_____":["------","------","------"],
-        "SC":["SCTR:"+str(round(SCTR,4)), "gl(Tratamiento): "+str(round(glTrat,4)), "MCTR:"+str(round(MCTR,4))], #medidas de tratamiento [SCTR,glT,MCTR]
-        "_____/":["------","------","------"],
-        "gl":["SCE: "+str(round(SCE,4)), "gl(Error): "+str(glErr), "MCE:"+str(round(MCE,4))], #medidas de error [SCE,glE,MCE]
-        "____//":["------","------","------"],
-        "MC":["SCT: "+str(round(SCT,4)), "nt-1: "+str(nt-1), "(RV) - Fcalc: "+str(round(Fcalc,4))], #medidas totales [SCT,n-1,RV(fCalc)]
+        "SC":["SCTR: "+str(round(SCTR,4)), "SCE: "+str(round(SCE,4)), "SCT: "+str(round(SCT,4))], #SC
+        "gl":[" gl(Trat): t-1= "+str(round(glTrat,4)), "gl(Error): n-t= "+str(glErr), "nt-1= "+str(nt-1)], #gl
+        "MC":["MCTR: "+str(round(MCTR,4)), "MCE: "+str(round(MCE,4)), "(RV):Fcalc= "+str(round(Fcalc,4))], #MC y RV
     }
-
-    """
-    tabVarValues = {
-        "Fuente_de_Variacion":["Tratamientos","Error","Total"],
-        "SC":[("SCTR: ",round(SCTR,4)), ("gl(Tratamiento): ",round(glTrat,4)), ("MCTR:",round(MCTR,4))], #medidas de tratamiento [SCTR,glT,MCTR]
-        "gl":[("SCE: ",round(SCE,4)), ("gl(Error): ",glErr), ("MCE:",MCE)], #medidas de error [SCE,glE,MCE]
-        "MC":[("SCT: ",round(SCT,4)), ("nt-1: ",nt-1), ("(RV) - Fcalc: ",round(Fcalc,4))], #medidas totales [SCT,n-1,RV(fCalc)]
-    }
-    """
-
-    #dataframe con los calcs para la tabla
-    print("----------------------------------------------------------------------------------\n ") 
-    dfTabRV = pd.DataFrame(tabVarValues)
-    print(dfTabRV)
-
+    #
+    print("            ++ --- Tabla de Analisis de Varianza de una Via --- ++ ")
+    print(tabulate(tabVarValues, headers=["Fuente de Variac.","SC","gl","MC"], tablefmt='psql'))
+    #
     # -- PRUEBA DE HIPOTESIS --
     hipotesisProof(Ftab, Fcalc)
 
-    #calcsPerColumn["fTab"].append(float(f"{valueCalcHere:.4f}"))
+
+    # -- PRUEBA DE TUKEY - 
+    tukeyTrial(ni,MCE,glTrat,glErr,alfa)
+
+    #primeras pruebas de impresion
+    #dataframe con los calcs para la tabla
+    #print("----------------------------------------------------------------------------------\n ") 
+    #dfTabRV = pd.DataFrame(tabVarValues)
+    #print(dfTabRV)
 # ------------------------ PRUEBA DE TUKEY -------------------
-def tukeyTrial(ni,MCE,nminust,alpha):
+def tukeyTrial(ni,MCE,glTrat,glError,alpha):
     #ni = nj = 30 (muestra por col)
     global nj
     nj = ni
+    nmt  = glError
+    Qt = studentized_range.ppf(1 - alpha, glTrat + 1, glError)
+    # Sea Qt -> alpha αQt, nmt studentizada // solo para impresion: α
+    DHS = Qt*sqrt(MCE/nj)
+
+    #
+    print(" -------- PRUEBA DE TUKEY ------------")
+    print("DHS: Diferencia Honestamente Significativa")
+    print("nj:",nj)
+    print("n-t:",nmt)
+    print("MCE:",round(MCE,4))
+    print("αQt,n-t:",round(Qt,4))
+    print("DHS =",str(round(DHS,4)))
     #Valor qalpha t studentizada?
     #print(f" x")
 #
+def medComparison(mediasVars, tCols):
+    print("t=",tCols)
+    varsTo = []
+    pivot=0
+    while pivot<tCols:
+        print("x")
+        for nombreCol in nombres_columnas:
+            varsTo.append(("Variable:",nombreCol))
+            pivot=pivot+1
+        for nombreVar in varsTo:   
+            print("nombreVar", nombreVar)
+        for med in mediasVars:   
+            print("media:",med)
+
+
+    #medVars = [] 0y, 1x1, 2x2, 3x3
+        """
+            y    x1   x2    x3
+        y   //  y-x1 y-x2  y-x3 
+        x1 //   //  x1-x2  x1-x3
+        x2 //   //    //   x2-x3
+        x3 //   //    //    //
+        
+        """
+    """
+    medTable = {
+        "variables":["var:","Error","Total"],
+        "SC":["SCTR: "+str(round(SCTR,4)), "SCE: "+str(round(SCE,4)), "SCT: "+str(round(SCT,4))], #SC
+        "gl":[" gl(Trat): t-1= "+str(round(glTrat,4)), "gl(Error): n-t= "+str(glErr), "nt-1= "+str(nt-1)], #gl
+        "MC":["MCTR: "+str(round(MCTR,4)), "MCE: "+str(round(MCE,4)), "(RV):Fcalc= "+str(round(Fcalc,4))], #MC y RV
+    }"""
+
+    #
+    print(" -----------------------------------------------------------------------------------------")
+    print(" Para determinar dependencia e independencia de las variables presentes en la muestra: ")
+    print(" 1: Comparamos los valores de las medias entre si ")
+    print(" 2: Luego comparamos los valores con el valor del DHS (Prueba Tukey) ")
+    print(" * Si los valores < DHS ; son variables dependientes ")
+    print(" * Si los valores > DHS ; son variables independientes ")
+    #print(\n)
+    print(" --- Tabla de comparacion entre las medias de las variables --- ")
+    print(tabulate(tabVarValues, headers=varsTo, tablefmt='psql')) 
+    # #ARREGLAR!!!
+    #
+    print(" -----------------------------------------------------------------------------------------")
+    #print("x")
 
 #-------------------------------------- IMPRESION TABLA DE CONTINGENCIA ---------------------------------------
 def printSumData():
@@ -263,8 +343,8 @@ def printSumData():
 
     #send the new df with the data to the next calkcs to do
     varianceAnalysisCalcs(dfResults, tCols, nt)
-    #why so from the df? cause there's the whole data and not just BY COLUMN / PER COLUMN
-    
+    medComparison(mediasVars, tCols)
+    #why so from the df? cause there's the whole data and not just BY COLUMN / PER COLUMN 
 #
 printSumData()    
 
