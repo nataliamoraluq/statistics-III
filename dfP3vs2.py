@@ -185,18 +185,7 @@ def varianceAnalysisCalcs(dfResults, tCols, nt):
     #OJO AQUI! Comparar results y ver!!!!!!
     Ftab = f.ppf(1-0.05, dfn=glTrat,dfd=glErr)
     #print("Ftab = ", round(Ftab,4))
-    #save the data on the dict - datos pre tabla
-    preTabValues = {
-        "gl(Trat)":glTrat,
-        "gl(Err)":glErr,
-        "sigLevel":0.95,
-        "alpha":0.05,
-        "fTab":Ftab,
-        "fCalc": Fcalc,
-    }
-
-    alfa = preTabValues["alpha"]
-    print("alpha=",alfa)
+    
 
     #vers .1 del diccionario ; ordenando por tipo de medidas
     """tabVarValues = {
@@ -217,9 +206,22 @@ def varianceAnalysisCalcs(dfResults, tCols, nt):
     print("            ++ --- Tabla de Analisis de Varianza de una Via --- ++ ")
     print(tabulate(tabVarValues, headers=["Fuente de Variac.","SC","gl","MC"], tablefmt='psql'))
     #
+    #save the data on the dict - datos pre tabla n other stuff
+    preTabValues = {
+        "gl(Trat)":glTrat,
+        "gl(Err)":glErr,
+        "sigLevel":0.95,
+        "alpha":0.05,
+        "fTab":Ftab,
+        "fCalc": Fcalc,
+        
+    }
+
+    #"DHS": tukeyTrial(ni,MCE,glTrat,glErr,alfa)
+    alfa = preTabValues["alpha"]
+    #print("alpha=",alfa)
     # -- PRUEBA DE HIPOTESIS --
     hipotesisProof(Ftab, Fcalc)
-
 
     # -- PRUEBA DE TUKEY - 
     tukeyTrial(ni,MCE,glTrat,glErr,alfa)
@@ -237,6 +239,7 @@ def tukeyTrial(ni,MCE,glTrat,glError,alpha):
     nmt  = glError
     Qt = studentized_range.ppf(1 - alpha, glTrat + 1, glError)
     # Sea Qt -> alpha αQt, nmt studentizada // solo para impresion: α
+    global DHS
     DHS = Qt*sqrt(MCE/nj)
 
     #
@@ -247,41 +250,50 @@ def tukeyTrial(ni,MCE,glTrat,glError,alpha):
     print("MCE:",round(MCE,4))
     print("αQt,n-t:",round(Qt,4))
     print("DHS =",str(round(DHS,4)))
-    #Valor qalpha t studentizada?
-    #print(f" x")
+
+    return DHS
 #
-def medComparison(mediasVars, tCols):
-    print("t=",tCols)
-    varsTo = []
-    pivot=0
-    while pivot<tCols:
-        print("x")
-        for nombreCol in nombres_columnas:
-            varsTo.append(("Variable:",nombreCol))
-            pivot=pivot+1
-        for nombreVar in varsTo:   
-            print("nombreVar", nombreVar)
-        for med in mediasVars:   
-            print("media:",med)
+def medComparison(mediasVars):
+    """
+            y    x1   x2    x3 -> mediasVars[] -- med values of each var
 
-
-    #medVars = [] 0y, 1x1, 2x2, 3x3
-        """
-            y    x1   x2    x3
         y   //  y-x1 y-x2  y-x3 
         x1 //   //  x1-x2  x1-x3
         x2 //   //    //   x2-x3
         x3 //   //    //    //
-        
-        """
     """
-    medTable = {
-        "variables":["var:","Error","Total"],
-        "SC":["SCTR: "+str(round(SCTR,4)), "SCE: "+str(round(SCE,4)), "SCT: "+str(round(SCT,4))], #SC
-        "gl":[" gl(Trat): t-1= "+str(round(glTrat,4)), "gl(Error): n-t= "+str(glErr), "nt-1= "+str(nt-1)], #gl
-        "MC":["MCTR: "+str(round(MCTR,4)), "MCE: "+str(round(MCE,4)), "(RV):Fcalc= "+str(round(Fcalc,4))], #MC y RV
-    }"""
-
+    #print("t=",tCols)
+    nameCols = [] # nombres de vars/columns
+    #
+    #global medArray
+    medArray = [] #array - duplica del array orig de las medias
+    global comparTable #tabla final - results de la dif entre las medias a generar 
+    comparTable = []
+    #nombres de las variables por columnas del CSV *; note; pudiera usarlos directo pero asi es mas ordenado
+    for nombreCol in nombres_columnas:
+        nameCols.append(("x̅ de %s"%(nombreCol)))
+        #print(nameCols)
+    #
+    columnsLen = len(mediasVars) # len medias = tCols
+    #nameCols = ["Var1","Var2","Var3","Var4"] #nombres etiquetas / vars
+    medArray = mediasVars #copia del array para las etiquetas - vars
+    comparTable = [] # """matriz""" / tabla de dif entre las medias de c/var
+    #-------------- Estructura de la tabla ----------
+    mainHead = [" x̅ "] + nameCols # mainHead - nombre de las variables
+    secHeader = ["    "] + medArray #sec - header; para los valores como tal de cada media
+    comparTable.append(mainHead)
+    comparTable.append(secHeader)
+    # estructura generada - calcs. de las diferencias para ver dependencias e independencia
+    for i in range(columnsLen):
+        # filas de la tabla se crean con pivot 
+        pivot = [medArray[i]]  #pivot for each i in med values
+        for j in range(columnsLen):
+            if j < i:
+                pivot.append("///")
+                #non : /// or ||| lo que se vea mas estetico y bonito
+            else:
+                pivot.append(mediasVars[i] - mediasVars[j])  # i - j -> medYvar - medX1var
+        comparTable.append(pivot)
     #
     print(" -----------------------------------------------------------------------------------------")
     print(" Para determinar dependencia e independencia de las variables presentes en la muestra: ")
@@ -291,7 +303,16 @@ def medComparison(mediasVars, tCols):
     print(" * Si los valores > DHS ; son variables independientes ")
     #print(\n)
     print(" --- Tabla de comparacion entre las medias de las variables --- ")
-    print(tabulate(tabVarValues, headers=varsTo, tablefmt='psql')) 
+    print(tabulate(comparTable, headers="firstrow", tablefmt="grid"))
+    print(" --- Variables independientes --- ")
+    print("working on that vs1")
+    print(" --- Variables dependientes --- ")
+    print("working on that vs2")
+
+    #ahora prosigue comparar de esta tabla c/resultado con el DHS 
+    
+
+    #print(tabulate(tabVarValues, headers=varsTo, tablefmt='psql')) 
     # #ARREGLAR!!!
     #
     print(" -----------------------------------------------------------------------------------------")
@@ -341,10 +362,10 @@ def printSumData():
     print(f" Nt = {nt}")
     print(f" t = {tCols}")
 
-    #send the new df with the data to the next calkcs to do
-    varianceAnalysisCalcs(dfResults, tCols, nt)
-    medComparison(mediasVars, tCols)
-    #why so from the df? cause there's the whole data and not just BY COLUMN / PER COLUMN 
+    #send the new df with the data to the next calcs to do
+    varianceAnalysisCalcs(dfResults, tCols, nt) #tabla de analisis de varianza; prueba de hipotesis y prueba de Tukey
+    medComparison(mediasVars) #tabla comparacion entre medias y det. variables dependient. e independient.
+    # 
 #
 printSumData()    
 
@@ -376,3 +397,72 @@ numero = np.float64(12.3456789)
     sumTal2 = 0
 
 """
+
+#failed trial - con pivot y aux vs1
+    #pivot=pivot+1
+"""while pivot<tCols:
+        #print("x")
+        
+        pos = 0
+        while pos<len(mediasVars):
+            if pos<len(mediasVars):
+                medArray.append(("variable%s"%pos,mediasVars[pos]))
+                pos=pos+1
+
+    auxmedArray = mediasVars.copy()
+    for i, j in zip(mediasVars,auxmedArray):
+        #valuei = medArray[i][1]
+        #valuej = auxmedArray[j][1]
+        if(i==j):
+            print("i:",i,"j+1:",j+1)
+            #i = i+1
+            #j = j+1
+    
+    #medVars = [] 0y, 1x1, 2x2, 3x3
+    
+            y    x1   x2    x3 -> mediasVars[]
+
+        y   //  y-x1 y-x2  y-x3 
+        x1 //   //  x1-x2  x1-x3
+        x2 //   //    //   x2-x3
+        x3 //   //    //    //
+
+            y    x1   x2    x3
+        y   //  y-x1 y-x2  y-x3 
+        x1 //   //  x1-x2  x1-x3
+        x2 //   //    //   x2-x3
+        x3 //   //    //    //
+        
+        
+    
+    medTable = {
+        "variables":["var:","Error","Total"],
+        "SC":["SCTR: "+str(round(SCTR,4)), "SCE: "+str(round(SCE,4)), "SCT: "+str(round(SCT,4))], #SC
+        "gl":[" gl(Trat): t-1= "+str(round(glTrat,4)), "gl(Error): n-t= "+str(glErr), "nt-1= "+str(nt-1)], #gl
+        "MC":["MCTR: "+str(round(MCTR,4)), "MCE: "+str(round(MCE,4)), "(RV):Fcalc= "+str(round(Fcalc,4))], #MC y RV
+    }
+
+#prueba (fallida) - dictionary con keys iterables para la comparacion de medias:
+
+                for nombreVar in varsTo:   
+                    print("nombreVar", nombreVar)
+                
+                
+                medDict = {
+                    "variable%s"%pos:mediasVars[pos]
+                }
+                #var1 = "variable%s"%pos
+                #med1 = mediasVars[pos]
+                
+                print("media:",med)
+                print('pos + 1 =',pos+1)
+                print("pos+ 1 in medVar = ",mediasVars[pos+1])
+                
+                var= "variable%s"%pos
+                s0s=mediasVars[pos]
+
+                medDict.clear()
+
+                medDict.update(
+                    {"variable%s"%pos=med1},{var=s0s}
+                )"""
