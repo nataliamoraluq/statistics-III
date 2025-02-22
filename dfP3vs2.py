@@ -243,8 +243,9 @@ def tukeyTrial(ni,MCE,glTrat,glError,alpha):
     DHS = Qt*sqrt(MCE/nj)
 
     #
-    print(" -------- PRUEBA DE TUKEY ------------")
+    print(" ----------- PRUEBA DE TUKEY -------------")
     print("DHS: Diferencia Honestamente Significativa")
+    print(" -----------------------------------------")
     print("nj:",nj)
     print("n-t:",nmt)
     print("MCE:",round(MCE,4))
@@ -264,56 +265,85 @@ def medComparison(mediasVars):
     """
     #print("t=",tCols)
     nameCols = [] # nombres de vars/columns
+    countVars = [] #indice de las variables - cant de variables
+    independent = []
+    dependent = []
     #
     #global medArray
     medArray = [] #array - duplica del array orig de las medias
     global comparTable #tabla final - results de la dif entre las medias a generar 
     comparTable = []
     #nombres de las variables por columnas del CSV *; note; pudiera usarlos directo pero asi es mas ordenado
+    countV = 0
     for nombreCol in nombres_columnas:
-        nameCols.append(("x̅ de %s"%(nombreCol)))
-        #print(nameCols)
+        countV = countV+1
+        countVars.append("-Var.%s"%(countV))
+        nameCols.append(nombreCol)
     #
     columnsLen = len(mediasVars) # len medias = tCols
     #nameCols = ["Var1","Var2","Var3","Var4"] #nombres etiquetas / vars
     medArray = mediasVars #copia del array para las etiquetas - vars
     comparTable = [] # """matriz""" / tabla de dif entre las medias de c/var
     #-------------- Estructura de la tabla ----------
-    mainHead = [" x̅ "] + nameCols # mainHead - nombre de las variables
-    secHeader = ["    "] + medArray #sec - header; para los valores como tal de cada media
-    comparTable.append(mainHead)
-    comparTable.append(secHeader)
     # estructura generada - calcs. de las diferencias para ver dependencias e independencia
     for i in range(columnsLen):
-        # filas de la tabla se crean con pivot 
-        pivot = [medArray[i]]  #pivot for each i in med values
+        # filas de la tabla se crean en pivot 
+        pivot = []
         for j in range(columnsLen):
             if j < i:
                 pivot.append("///")
                 #non : /// or ||| lo que se vea mas estetico y bonito
             else:
                 pivot.append(mediasVars[i] - mediasVars[j])  # i - j -> medYvar - medX1var
+                meandiff = mediasVars[i] - mediasVars[j] #valor de la diferencia
+
+                # TRY 2 - dif comparada con el DHS
+                #relBetVal - relationshipBetweenValues
+                #or meandiff > -dhsVal
+                relBetVal = "Independiente" if meandiff > DHS else "Dependiente"
+                if (meandiff!=0.0):
+                    if(relBetVal=="Independiente"):
+                        #print("independiente val: ",nameCols[i]," - x̅:",meandiff)
+                        independent.append((nameCols[i]," - x̅:",round(meandiff,4)))
+                    else: 
+                        #print(" dependiente val: ",meandiff)
+                        #print("dependiente val: ",nameCols[i]," - x̅=",meandiff)
+                        dependent.append((nameCols[i]," - x̅:",round(meandiff,4)))
+    
         comparTable.append(pivot)
+    dfTable = pd.DataFrame(comparTable, index=medArray, columns=medArray)
     #
     print(" -----------------------------------------------------------------------------------------")
     print(" Para determinar dependencia e independencia de las variables presentes en la muestra: ")
-    print(" 1: Comparamos los valores de las medias entre si ")
-    print(" 2: Luego comparamos los valores con el valor del DHS (Prueba Tukey) ")
-    print(" * Si los valores < DHS ; son variables dependientes ")
-    print(" * Si los valores > DHS ; son variables independientes ")
+    print(" 1: Comparamos valores de las medias entre si; tabla de diferencia entre ")
+    print(" los valores de las medias ")
+    print(" 2: Luego comparamos las diferencias con el valor del DHS ")
+    print("\n")
+    print("   * Si la dif. < DHS ; existe dependencia entre variables ")
+    print("   * Si la dif. > DHS ; No existe dependencia entre variables; vars. independientes ")
     #print(\n)
-    print(" --- Tabla de comparacion entre las medias de las variables --- ")
-    print(tabulate(comparTable, headers="firstrow", tablefmt="grid"))
-    print(" --- Variables independientes --- ")
-    print("working on that vs1")
+    print("____________________________________________________________________________")
+    print(" --- Tabla de diferencias entre las medias de las variables --- ")
+    print("___________________________________________________")
+    print("    "," ".join(nameCols))
+    print("______________________________________________")
+    print("    "," ".join(countVars))
+    print("____________________________________")
+    print(dfTable)
+    print("____________________________________")
+
+    #print(tabulate(comparTable, headers="firstrow", tablefmt="grid"))
+    print("\n")
     print(" --- Variables dependientes --- ")
-    print("working on that vs2")
-
-    #ahora prosigue comparar de esta tabla c/resultado con el DHS 
-    
-
-    #print(tabulate(tabVarValues, headers=varsTo, tablefmt='psql')) 
-    # #ARREGLAR!!!
+    for val in dependent:
+        print(val)
+    print("\n")
+    #independent, dependent
+    print(" --- Variables independientes --- ")
+    for val in independent:
+        print(val)
+    #print(",".join(independent))ç
+    #
     #
     print(" -----------------------------------------------------------------------------------------")
     #print("x")
@@ -466,3 +496,33 @@ numero = np.float64(12.3456789)
                 medDict.update(
                     {"variable%s"%pos=med1},{var=s0s}
                 )"""
+
+"""
+tabla dif de medias con tabulate - discard por tema round y decimales
+
+columnsLen = len(mediasVars) # len medias = tCols
+    #nameCols = ["Var1","Var2","Var3","Var4"] #nombres etiquetas / vars
+    medArray = mediasVars #copia del array para las etiquetas - vars
+    comparTable = [] # "matriz" / tabla de dif entre las medias de c/var
+    #-------------- Estructura de la tabla ----------
+    mainHead = [" x̅ "] + nameCols # mainHead - nombre de las variables
+    #secHeader = ["    "] + medArray #sec - header; para los valores como tal de cada media
+    secHeader = medArray
+    comparTable.append(mainHead)
+    comparTable.append(secHeader)
+    # estructura generada - calcs. de las diferencias para ver dependencias e independencia
+    for i in range(columnsLen):
+        # filas de la tabla se crean con pivot 
+        pivot = [medArray[i]]  #pivot for each i in med values
+        for j in range(columnsLen):
+            if j < i:
+                pivot.append("///")
+                #non : /// or ||| lo que se vea mas estetico y bonito
+            else:
+                pivot.append(mediasVars[i] - mediasVars[j])  # i - j -> medYvar - medX1var
+        comparTable.append(pivot)
+
+
+#print(tabulate(comparTable, headers="firstrow", tablefmt="grid"))
+
+"""
